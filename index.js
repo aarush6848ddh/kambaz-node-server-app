@@ -12,10 +12,14 @@ import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 
 const app = express();
 
+// Normalize CLIENT_URL by removing trailing slash for CORS matching
+const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+const normalizedClientUrl = clientUrl.replace(/\/$/, ""); // Remove trailing slash
+
 app.use(
   cors({
     credentials: true,
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: normalizedClientUrl,
   })
 );
 
