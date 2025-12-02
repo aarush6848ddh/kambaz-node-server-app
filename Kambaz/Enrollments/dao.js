@@ -10,8 +10,14 @@ export async function findUsersForCourse(courseId) {
   return enrollments.map((enrollment) => enrollment.user);
 }
 
-export function enrollUserInCourse(userId, courseId) {
-  return model.create({ _id: `${userId}-${courseId}`, user: userId, course: courseId });
+export async function enrollUserInCourse(userId, courseId) {
+  // Use findOneAndUpdate with upsert to avoid duplicate key errors
+  const enrollment = await model.findOneAndUpdate(
+    { user: userId, course: courseId },
+    { _id: `${userId}-${courseId}`, user: userId, course: courseId },
+    { upsert: true, new: true }
+  );
+  return enrollment;
 }
 
 export function unenrollUserFromCourse(userId, courseId) {
