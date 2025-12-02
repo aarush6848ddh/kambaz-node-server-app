@@ -1,21 +1,23 @@
-import Database from "../Database/index.js";
-import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
+
+export async function findCoursesForUser(userId) {
+  const enrollments = await model.find({ user: userId }).populate("course");
+  return enrollments.map((enrollment) => enrollment.course);
+}
+
+export async function findUsersForCourse(courseId) {
+  const enrollments = await model.find({ course: courseId }).populate("user");
+  return enrollments.map((enrollment) => enrollment.user);
+}
 
 export function enrollUserInCourse(userId, courseId) {
-  const { enrollments } = Database;
-  // Check if enrollment already exists
-  const exists = enrollments.some(
-    (e) => e.user === userId && e.course === courseId
-  );
-  if (!exists) {
-    enrollments.push({ _id: uuidv4(), user: userId, course: courseId });
-  }
+  return model.create({ _id: `${userId}-${courseId}`, user: userId, course: courseId });
 }
 
 export function unenrollUserFromCourse(userId, courseId) {
-  const { enrollments } = Database;
-  Database.enrollments = enrollments.filter(
-    (e) => !(e.user === userId && e.course === courseId)
-  );
+  return model.deleteOne({ user: userId, course: courseId });
 }
 
+export function findAllEnrollments() {
+  return model.find();
+}

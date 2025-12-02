@@ -12,8 +12,14 @@ export default function UserRoutes(app) {
       res.sendStatus(403);
       return;
     }
-    const newUser = await dao.createUser(req.body);
-    res.json(newUser);
+    try {
+      const newUser = await dao.createUser(req.body);
+      console.log("Create user - successfully created:", newUser);
+      res.json(newUser);
+    } catch (error) {
+      console.error("Create user - error:", error);
+      res.status(500).json({ message: "Failed to create user", error: error.message });
+    }
   };
   
   const deleteUser = async (req, res) => {
@@ -54,11 +60,6 @@ export default function UserRoutes(app) {
     }
   };
   
-  const findUsersEnrolledInCourse = async (req, res) => {
-    const { courseId } = req.params;
-    const users = await dao.findUsersEnrolledInCourse(courseId);
-    res.json(users);
-  };
   const updateUser = async (req, res) => {
     const userId = req.params.userId;
     const userUpdates = req.body;
@@ -103,6 +104,7 @@ export default function UserRoutes(app) {
       res.status(500).json({ message: "Failed to update user" });
     }
   };
+
   const signup = async (req, res) => {
     try {
       const user = await dao.findUserByUsername(req.body.username);
@@ -117,7 +119,6 @@ export default function UserRoutes(app) {
       res.json(currentUser);
     } catch (error) {
       console.error("Signup error:", error);
-      // Return detailed error information
       res.status(500).json({ 
         message: error.message || "Failed to create user",
         error: error.toString(),
@@ -125,6 +126,7 @@ export default function UserRoutes(app) {
       });
     }
   };
+
   const signin = async (req, res) => {
     const { username, password } = req.body;
     const currentUser = await dao.findUserByCredentials(username, password);
@@ -135,10 +137,12 @@ export default function UserRoutes(app) {
       res.status(401).json({ message: "Unable to login. Try again later." });
     }
   };
+
   const signout = (req, res) => {
     req.session.destroy();
     res.sendStatus(200);
   };
+
   const profile = (req, res) => {
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
@@ -148,36 +152,44 @@ export default function UserRoutes(app) {
     res.json(currentUser);
   };
 
-  const findCoursesForEnrolledUser = (req, res) => {
-    let { userId } = req.params;
-    if (userId === "current") {
-      const currentUser = req.session["currentUser"];
-      if (!currentUser) {
-        res.sendStatus(401);
-        return;
-      }
-      userId = currentUser._id;
-    }
-    const courses = courseDao.findCoursesForEnrolledUser(userId);
-    res.json(courses);
-  };
-
-  const createCourse = (req, res) => {
+  const findCoursesForUser = async (req, res) => {
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
       res.sendStatus(401);
       return;
     }
-    const newCourse = courseDao.createCourse(req.body);
-    enrollmentsDao.enrollUserInCourse(currentUser._id, newCourse._id);
+    
+    // If admin, return all courses
+    if (currentUser.role === "ADMIN") {
+      const courses = await courseDao.findAllCourses();
+      res.json(courses);
+      return;
+    }
+    
+    let { userId } = req.params;
+    if (userId === "current") {
+      userId = currentUser._id;
+    }
+    
+    const courses = await enrollmentsDao.findCoursesForUser(userId);
+    res.json(courses);
+  };
+
+  const createCourse = async (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!currentUser) {
+      res.sendStatus(401);
+      return;
+    }
+    const newCourse = await courseDao.createCourse(req.body);
+    await enrollmentsDao.enrollUserInCourse(currentUser._id, newCourse._id);
     res.json(newCourse);
   };
 
   app.post("/api/users", createUser);
   app.get("/api/users", findAllUsers);
   app.get("/api/users/:userId", findUserById);
-  app.get("/api/users/:userId/courses", findCoursesForEnrolledUser);
-  app.get("/api/courses/:courseId/users", findUsersEnrolledInCourse);
+  app.get("/api/users/:userId/courses", findCoursesForUser);
   app.put("/api/users/:userId", updateUser);
   app.delete("/api/users/:userId", deleteUser);
   app.post("/api/users/signup", signup);
@@ -186,4 +198,3 @@ export default function UserRoutes(app) {
   app.post("/api/users/profile", profile);
   app.post("/api/users/current/courses", createCourse);
 }
-
