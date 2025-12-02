@@ -11,7 +11,7 @@ import ModuleRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 
-const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
+const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb+srv://mongodb:Singh684%21@kambaz.hqafhlu.mongodb.net/kambaz?retryWrites=true&w=majority&appName=Kambaz";
 console.log("Connecting to MongoDB:", CONNECTION_STRING.replace(/:[^:@]+@/, ':****@')); // Hide password in logs
 mongoose.connect(CONNECTION_STRING); // connect to the kambaz database
 
