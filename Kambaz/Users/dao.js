@@ -1,9 +1,9 @@
 import model from "./model.js";
-import db from "../Database/index.js"; // This import might be from a previous array-based DAO
+import enrollmentModel from "../Enrollments/model.js";
 import { v4 as uuidv4 } from "uuid";
 
 export const createUser = async (user) => {
-  const newUser = { ...user, _id: uuidv4() }; // insert new user into the database
+  const newUser = { ...user, _id: uuidv4() };
   console.log("DAO createUser - creating user with _id:", newUser._id);
   try {
     const created = await model.create(newUser);
@@ -14,6 +14,7 @@ export const createUser = async (user) => {
     throw error;
   }
 };
+
 export const findAllUsers = () => model.find();
 export const findUserById = (userId) => model.findById(userId);
 export const findUserByUsername = (username) => model.findOne({ username: username });
@@ -22,11 +23,8 @@ export const updateUser = (userId, user) => model.updateOne({ _id: userId }, { $
 export const deleteUser = (userId) => model.deleteOne({ _id: userId });
 
 export const findUsersEnrolledInCourse = async (courseId) => {
-  // Temporary implementation using Database until enrollments are migrated to MongoDB
-  const { enrollments } = db;
-  const enrolledUserIds = enrollments
-    .filter((enrollment) => enrollment.course === courseId)
-    .map((enrollment) => enrollment.user);
+  const enrollments = await enrollmentModel.find({ course: courseId });
+  const enrolledUserIds = enrollments.map((enrollment) => enrollment.user);
   return model.find({ _id: { $in: enrolledUserIds } });
 };
 
