@@ -64,6 +64,11 @@ export default function UserRoutes(app) {
     const userUpdates = req.body;
     const currentUser = req.session["currentUser"];
     
+    console.log("Update user - currentUser:", currentUser);
+    console.log("Update user - userId:", userId);
+    console.log("Update user - currentUser role:", currentUser?.role);
+    console.log("Update user - currentUser _id:", currentUser?._id);
+    
     if (!currentUser) {
       res.status(401).json({ message: "You must be logged in to update a user" });
       return;
@@ -71,6 +76,8 @@ export default function UserRoutes(app) {
     
     // Allow users to update their own profile, or faculty/admin to update any user
     const canUpdate = String(currentUser._id) === String(userId) || currentUser.role === "FACULTY" || currentUser.role === "ADMIN";
+    
+    console.log("Update user - canUpdate:", canUpdate);
     
     if (!canUpdate) {
       res.status(403).json({ message: "You do not have permission to update this user" });
@@ -97,14 +104,21 @@ export default function UserRoutes(app) {
     }
   };
   const signup = async (req, res) => {
-    const user = await dao.findUserByUsername(req.body.username);
-    if (user) {
-      res.status(400).json({ message: "Username already taken" });
-      return;
+    try {
+      const user = await dao.findUserByUsername(req.body.username);
+      if (user) {
+        res.status(400).json({ message: "Username already taken" });
+        return;
+      }
+      console.log("Signup - creating user with data:", req.body);
+      const currentUser = await dao.createUser(req.body);
+      console.log("Signup - user created successfully:", currentUser);
+      req.session["currentUser"] = currentUser;
+      res.json(currentUser);
+    } catch (error) {
+      console.error("Signup error:", error);
+      res.status(500).json({ message: error.message || "Failed to create user" });
     }
-    const currentUser = await dao.createUser(req.body);
-    req.session["currentUser"] = currentUser;
-    res.json(currentUser);
   };
   const signin = async (req, res) => {
     const { username, password } = req.body;
