@@ -12,7 +12,10 @@ import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
-console.log("Connecting to MongoDB:", CONNECTION_STRING.replace(/:[^:@]+@/, ':****@')); // Hide password in logs
+console.log("=== MongoDB Connection Debug ===");
+console.log("DATABASE_CONNECTION_STRING env var exists:", !!process.env.DATABASE_CONNECTION_STRING);
+console.log("Using connection string:", CONNECTION_STRING.replace(/:[^:@]+@/, ':****@'));
+console.log("Is Atlas connection?", CONNECTION_STRING.includes('mongodb+srv://'));
 mongoose.connect(CONNECTION_STRING); // connect to the kambaz database
 
 const app = express();
