@@ -2,9 +2,17 @@ import model from "./model.js";
 import db from "../Database/index.js"; // This import might be from a previous array-based DAO
 import { v4 as uuidv4 } from "uuid";
 
-export const createUser = (user) => {
+export const createUser = async (user) => {
   const newUser = { ...user, _id: uuidv4() }; // insert new user into the database
-  return model.create(newUser);
+  console.log("DAO createUser - creating user with _id:", newUser._id);
+  try {
+    const created = await model.create(newUser);
+    console.log("DAO createUser - user created in MongoDB:", created);
+    return created;
+  } catch (error) {
+    console.error("DAO createUser - MongoDB error:", error);
+    throw error;
+  }
 };
 export const findAllUsers = () => model.find();
 export const findUserById = (userId) => model.findById(userId);
