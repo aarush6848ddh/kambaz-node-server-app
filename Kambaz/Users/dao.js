@@ -1,35 +1,36 @@
-import Database from "../Database/index.js";
+import model from "./model.js";
+import db from "../Database/index.js"; // This import might be from a previous array-based DAO
 import { v4 as uuidv4 } from "uuid";
 
 export const createUser = (user) => {
-  const newUser = { ...user, _id: uuidv4() };
-  Database.users = [...Database.users, newUser];
-  return newUser;
+  const newUser = { ...user, _id: uuidv4() }; // insert new user into the database
+  return model.create(newUser);
 };
+export const findAllUsers = () => model.find();
+export const findUserById = (userId) => model.findById(userId);
+export const findUserByUsername = (username) => model.findOne({ username: username });
+export const findUserByCredentials = (username, password) => model.findOne({ username, password });
+export const updateUser = (userId, user) => model.updateOne({ _id: userId }, { $set: user });
+export const deleteUser = (userId) => model.deleteOne({ _id: userId });
 
-export const findAllUsers = () => Database.users;
-
-export const findUserById = (userId) => Database.users.find((user) => user._id === userId);
-
-export const findUserByUsername = (username) => Database.users.find((user) => user.username === username);
-
-export const findUserByCredentials = (username, password) =>
-  Database.users.find((user) => user.username === username && user.password === password);
-
-export const updateUser = (userId, user) => {
-  Database.users = Database.users.map((u) => (u._id === userId ? user : u));
-  return Database.users.find((u) => u._id === userId);
-};
-
-export const deleteUser = (userId) => {
-  Database.users = Database.users.filter((u) => u._id !== userId);
-};
-
-export const findUsersEnrolledInCourse = (courseId) => {
-  const { users, enrollments } = Database;
+export const findUsersEnrolledInCourse = async (courseId) => {
+  // Temporary implementation using Database until enrollments are migrated to MongoDB
+  const { enrollments } = db;
   const enrolledUserIds = enrollments
     .filter((enrollment) => enrollment.course === courseId)
     .map((enrollment) => enrollment.user);
-  return users.filter((user) => enrolledUserIds.includes(user._id));
+  return model.find({ _id: { $in: enrolledUserIds } });
+};
+
+export const findUsersByRole = (role) => model.find({ role: role });
+
+export const findUsersByPartialName = (partialName) => {
+  const regex = new RegExp(partialName, "i");
+  return model.find({
+    $or: [
+      { firstName: { $regex: regex } },
+      { lastName: { $regex: regex } },
+    ],
+  });
 };
 
