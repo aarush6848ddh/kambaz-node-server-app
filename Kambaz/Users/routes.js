@@ -117,7 +117,12 @@ export default function UserRoutes(app) {
       res.json(currentUser);
     } catch (error) {
       console.error("Signup error:", error);
-      res.status(500).json({ message: error.message || "Failed to create user" });
+      // Return detailed error information
+      res.status(500).json({ 
+        message: error.message || "Failed to create user",
+        error: error.toString(),
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+      });
     }
   };
   const signin = async (req, res) => {
